@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#6366f1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>পারিবারিক হিসাব খাতা</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary:#6366f1;--primary2:#8b5cf6;--green:#10b981;--red:#ef4444;
+    --text:#1e2235;--muted:#7b8194;--card:#fff;--line:#eef0f6;--bg:#f3f5fb;
+    --header-h:56px;--footer-h:64px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{
+    margin:0;padding:0;
+    overscroll-behavior:none;
+    -webkit-text-size-adjust:100%;
+    background:#e5e7eb;
+  }
+  body{
+    font-family:'Hind Siliguri',system-ui,-apple-system,sans-serif;
+    color:var(--text);-webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;-webkit-appearance:none;appearance:none;touch-action:manipulation}
+  input,select,textarea{font-family:inherit;-webkit-appearance:none;appearance:none;touch-action:manipulation}
+
+  /* ================= APP SHELL ================= */
+  .app{
+    position:fixed;
+    top:0;bottom:0;
+    left:50%;transform:translateX(-50%);
+    width:100%;max-width:480px;
+    display:flex;flex-direction:column;
+    overflow:hidden;
+    background:var(--bg);
+    box-shadow:0 0 40px rgba(30,34,53,.10);
+  }
+
+  /* ================= HEADER ================= */
+  .app-header{
+    flex:0 0 auto;display:flex;align-items:center;gap:6px;
+    padding:8px 8px 8px 6px;
+    padding-top:calc(8px + env(safe-area-inset-top,0));
+    background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 60%,#a855f7 100%);
+    color:#fff;box-shadow:0 2px 12px rgba(99,102,241,.28);
+    position:relative;z-index:10;
+  }
+  .hamburger{
+    width:40px;height:40px;border:none;background:transparent;color:#fff;
+    border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;transition:.15s;
+  }
+  .hamburger:active{background:rgba(255,255,255,.18)}
+  .hamburger svg{width:22px;height:22px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round}
+  .app-title{flex:1;font-size:15.5px;font-weight:600;margin:0;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sync-indicator{
+    width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.15);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:4px;
+  }
+  .sync-indicator::before{content:"";width:8px;height:8px;border-radius:50%;background:#cbd5e1}
+  .sync-indicator.ok::before{background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.25)}
+  .sync-indicator.err::before{background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.25)}
+  .sync-indicator.sync::before{background:#f59e0b;animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  /* ================= CONTENT ================= */
+  .app-content{
+    flex:1 1 0;min-height:0;
+    overflow-y:auto;-webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    padding-bottom:14px;
+  }
+  .app-content::-webkit-scrollbar{width:0}
+
+  /* ================= FOOTER ================= */
+  .app-footer{
+    flex:0 0 auto;display:flex;align-items:flex-end;justify-content:space-around;
+    background:#fff;border-top:1px solid var(--line);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom,0));
+    box-shadow:0 -2px 12px rgba(30,34,53,.05);z-index:10;
+    min-height:calc(var(--footer-h) + env(safe-area-inset-bottom,0));
+  }
+  .fbtn{
+    flex:1;background:none;border:none;cursor:pointer;padding:6px 2px;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    color:var(--muted);transition:.15s;border-radius:10px;
+    touch-action:manipulation;
+  }
+  .fbtn:active{background:#f3f5fb}
+  .fbtn .fi{font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;height:22px}
+  .fbtn .fl{font-size:10.5px;font-weight:600;line-height:1;white-space:nowrap}
+  .fbtn.active{color:var(--primary)}
+  .fbtn.add-fbtn{flex:0 0 62px;justify-content:flex-start;padding-top:0}
+  .fbtn.add-fbtn .fab-circle{
+    width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    color:#fff;font-size:28px;font-weight:300;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 18px rgba(99,102,241,.4);margin-top:-20px;
+    transition:.15s;touch-action:manipulation;
+  }
+  .fbtn.add-fbtn:active .fab-circle{transform:scale(.92)}
+  .fbtn.add-fbtn .fl{display:none}
+
+  /* ================= Balance card ================= */
+  .bal-card{
+    margin:12px 14px 0;padding:16px;border-radius:20px;color:#fff;
+    background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 55%,#a855f7 100%);
+    box-shadow:0 10px 24px rgba(99,102,241,.28);position:relative;overflow:hidden;
+  }
+  .bal-card::after{content:"";position:absolute;width:180px;height:180px;background:rgba(255,255,255,.10);border-radius:50%;top:-90px;right:-50px}
+  .bal-label{font-size:12px;opacity:.85;position:relative;z-index:1}
+  .bal-value{font-size:30px;font-weight:700;line-height:1.15;margin-top:2px;position:relative;z-index:1}
+  .bal-value.neg{color:#ffe0e0}
+  .bal-stats{display:flex;gap:8px;margin-top:12px;position:relative;z-index:1}
+  .bal-stat{flex:1;background:rgba(255,255,255,.16);border-radius:12px;padding:8px 10px}
+  .bal-stat span{font-size:11px;opacity:.85;display:block;margin-bottom:1px}
+  .bal-stat b{font-size:14.5px;font-weight:600}
+
+  /* ================= Month bar ================= */
+  .month-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    margin:12px 14px 0;background:var(--card);border-radius:14px;padding:6px 8px;
+    box-shadow:0 2px 10px rgba(30,34,53,.06);
+  }
+  .month-bar button{width:36px;height:36px;border:none;border-radius:10px;background:#f1f2f9;color:var(--primary);font-size:18px;font-weight:700;cursor:pointer;line-height:1}
+  .month-bar button:active{background:#e6e8f5}
+  #monthLabel{font-size:15px;font-weight:600}
+
+  /* ================= Tabs ================= */
+  .tabs{display:flex;gap:6px;margin:12px 14px 0;background:#e9ecf6;border-radius:12px;padding:4px}
+  .tabs button{flex:1;border:none;background:transparent;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--muted);padding:9px 0;border-radius:9px;cursor:pointer;transition:.18s}
+  .tabs button.active{background:#fff;color:var(--primary);box-shadow:0 2px 8px rgba(30,34,53,.10)}
+
+  /* ================= Search ================= */
+  .search-wrap{margin:10px 14px 0;position:relative}
+  .search-wrap input{
+    width:100%;padding:11px 14px 11px 38px;border-radius:12px;
+    border:1.5px solid var(--line);background:#fff;font-family:inherit;
+    font-size:16px;outline:none;transition:.18s;color:var(--text);
+    min-height:44px;
+  }
+  .search-wrap input:focus{border-color:var(--primary)}
+  .search-wrap::before{content:"🔍";position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.6;pointer-events:none}
+
+  /* ================= Breakdown ================= */
+  .card{background:var(--card);margin:12px 14px 0;border-radius:16px;box-shadow:0 2px 12px rgba(30,34,53,.06);overflow:hidden}
+  .card-head{width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:none;font-family:inherit;font-size:14px;font-weight:600;color:var(--text);padding:14px 16px;cursor:pointer}
+  .chev{transition:.25s;color:var(--muted);font-size:12px}
+  .card.open .chev{transform:rotate(180deg)}
+  .breakdown-body{max-height:0;overflow:hidden;transition:max-height .3s ease;padding:0 16px}
+  .card.open .breakdown-body{max-height:900px;padding-bottom:16px}
+  .bar-row{margin-bottom:11px}
+  .bar-row:last-child{margin-bottom:0}
+  .bar-top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px}
+  .bar-top span:last-child{color:var(--muted)}
+  .bar{height:7px;background:#eef0f6;border-radius:6px;overflow:hidden}
+  .bar .fill{height:100%;border-radius:6px;transition:width .35s ease}
+
+  /* ================= List ================= */
+  #list{margin:10px 14px 0}
+  .day-head{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:11.5px;color:var(--muted);font-weight:600;
+    padding:10px 6px 7px;background:var(--bg);position:sticky;top:0;z-index:2;
+  }
+  .day-head:first-child{padding-top:2px}
+  .day-head .pos{color:var(--green)}
+  .day-head .neg{color:var(--red)}
+
+  .item{
+    display:flex;align-items:center;gap:10px;
+    background:var(--card);border-radius:14px;padding:10px 8px 10px 12px;
+    margin-bottom:8px;cursor:pointer;
+    box-shadow:0 1px 6px rgba(30,34,53,.05);transition:.15s;
+  }
+  .item:active{transform:scale(.99);background:#fafbff}
+  .ico{width:38px;height:38px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .ico.expense{background:#feeaea}
+  .ico.income{background:#e3f9f0}
+  .meta{flex:1;min-width:0}
+  .ttl{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sub{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .item-right{display:flex;align-items:center;gap:2px;flex-shrink:0}
+  .amt{font-size:14.5px;font-weight:700;white-space:nowrap;margin-right:2px}
+  .amt.expense{color:var(--red)}
+  .amt.income{color:var(--green)}
+  .del-btn{
+    width:36px;height:36px;border:none;background:transparent;border-radius:8px;
+    color:#cbd5e1;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;transition:.15s;
+  }
+  .del-btn:active{background:#feeaea;color:var(--red)}
+
+  .empty{text-align:center;padding:46px 20px;color:var(--muted);font-size:14px;line-height:1.9}
+  .empty .big{font-size:46px;display:block;margin-bottom:8px;opacity:.5}
+
+  /* ================= Drawer ================= */
+  .drawer-overlay{
+    position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:200;
+    opacity:0;visibility:hidden;transition:.25s;backdrop-filter:blur(2px);
+  }
+  .drawer-overlay.open{opacity:1;visibility:visible}
+  .drawer{
+    position:fixed;top:0;bottom:0;left:0;width:min(82vw,310px);
+    background:#fff;z-index:201;transform:translateX(-100%);
+    transition:transform .3s cubic-bezier(.4,0,.2,1);
+    display:flex;flex-direction:column;overflow:hidden;
+    box-shadow:4px 0 24px rgba(0,0,0,.15);
+    padding-top:env(safe-area-inset-top,0);
+    padding-bottom:env(safe-area-inset-bottom,0);
+  }
+  .drawer.open{transform:translateX(0)}
+  .drawer-head{
+    padding:20px 18px 16px;background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);
+    color:#fff;flex-shrink:0;
+  }
+  .drawer-head h2{margin:0;font-size:17px;font-weight:600}
+  .drawer-head p{margin:4px 0 0;font-size:12px;opacity:.85}
+  .drawer-menu{flex:1;overflow-y:auto;padding:8px 0;-webkit-overflow-scrolling:touch}
+  .dmi{
+    width:100%;border:none;background:none;text-align:left;cursor:pointer;
+    display:flex;align-items:center;gap:12px;padding:14px 18px;
+    font-size:14px;font-weight:500;color:var(--text);transition:.15s;
+  }
+  .dmi:active{background:#f3f5fb}
+  .dmi .dmi-icon{font-size:18px;width:24px;text-align:center}
+  .dmi.danger{color:var(--red)}
+  .dmi.danger .dmi-icon{color:var(--red)}
+  .drawer-divider{height:1px;background:var(--line);margin:6px 18px}
+  .drawer-footer{padding:12px 18px 18px;font-size:11.5px;color:var(--muted);flex-shrink:0;border-top:1px solid var(--line)}
+
+  /* ================= Page overlay (inside app) ================= */
+  .page{
+    position:absolute;inset:0;z-index:150;
+    display:flex;flex-direction:column;
+    background:var(--bg);
+    transform:translateX(100%);
+    transition:transform .3s cubic-bezier(.4,0,.2,1);
+    box-shadow:-8px 0 24px rgba(0,0,0,.12);
+  }
+  .page.open{transform:translateX(0)}
+  .page-header{
+    flex:0 0 auto;display:flex;align-items:center;gap:8px;
+    padding:10px 14px;
+    padding-top:calc(10px + env(safe-area-inset-top,0));
+    background:#fff;border-bottom:1px solid var(--line);
+  }
+  .page-back{
+    width:40px;height:40px;border:none;background:transparent;border-radius:50%;
+    font-size:20px;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .page-back:active{background:#f1f2f9}
+  .page-title{flex:1;font-size:16px;font-weight:600;margin:0;text-align:center}
+  .page-spacer{width:40px;flex-shrink:0}
+  .page-body{
+    flex:1 1 0;min-height:0;
+    overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+    padding:14px;
+    padding-bottom:calc(20px + env(safe-area-inset-bottom,0));
+  }
+
+  /* ================= Entry modal ================= */
+  .modal{
+    position:fixed;inset:0;background:rgba(15,23,42,.55);
+    display:none;align-items:flex-end;justify-content:center;
+    z-index:250;backdrop-filter:blur(2px);
+  }
+  .modal.open{display:flex}
+  .modal-content{
+    background:#fff;width:100%;max-width:480px;
+    border-radius:22px 22px 0 0;
+    padding:16px 16px calc(16px + env(safe-area-inset-bottom,0));
+    animation:slideUp .28s cubic-bezier(.2,.8,.3,1);
+    max-height:90vh;max-height:90dvh;overflow-y:auto;
+    -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  }
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  @media(min-width:520px){
+    .modal{align-items:center}
+    .modal-content{border-radius:24px;max-width:440px;animation:pop .22s ease}
+    @keyframes pop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+  }
+  .sheet-handle{width:42px;height:4px;background:#e2e6f0;border-radius:2px;margin:0 auto 12px}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .modal-head h2{font-size:16.5px;margin:0;font-weight:600}
+  .modal-head button{width:34px;height:34px;border-radius:50%;border:none;background:#f1f2f9;color:var(--muted);font-size:14px;cursor:pointer}
+
+  .type-toggle{display:flex;gap:8px;margin-bottom:14px}
+  .type-toggle button{
+    flex:1;padding:11px;border-radius:11px;border:2px solid var(--line);background:#fff;
+    font-family:inherit;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;transition:.18s;
+    min-height:44px;
+  }
+  .type-toggle button.active[data-t="expense"]{border-color:var(--red);background:#fef2f2;color:var(--red)}
+  .type-toggle button.active[data-t="income"]{border-color:var(--green);background:#ecfdf5;color:var(--green)}
+  .type-toggle button.active[data-ct="expense"]{border-color:var(--red);background:#fef2f2;color:var(--red)}
+  .type-toggle button.active[data-ct="income"]{border-color:var(--green);background:#ecfdf5;color:var(--green)}
+  .type-toggle button.active[data-period="monthly"]{border-color:var(--primary);background:#eef2ff;color:var(--primary)}
+  .type-toggle button.active[data-period="yearly"]{border-color:var(--primary2);background:#f5f3ff;color:var(--primary2)}
+
+  .field{margin-bottom:11px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+  .field input,.field select{
+    width:100%;padding:11px 12px;border-radius:11px;border:1.5px solid var(--line);
+    font-family:inherit;font-size:16px;background:#fafbff;color:var(--text);
+    outline:none;transition:.18s;min-height:44px;
+  }
+  .field input:focus,.field select:focus{border-color:var(--primary);background:#fff}
+  .field input[type="number"]{font-size:20px;font-weight:600}
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+  input[type="number"]{-moz-appearance:textfield}
+  input[type="date"]{min-height:44px;color:var(--text)}
+
+  .modal-actions{display:flex;gap:8px;margin-top:14px}
+  .modal-actions button{flex:1;padding:13px;border-radius:13px;border:none;font-family:inherit;font-size:14.5px;font-weight:600;cursor:pointer;transition:.15s;min-height:48px}
+  .primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.35)}
+  .danger{background:#feeaea;color:var(--red)}
+  .danger:active{background:#fdd}
+  .hidden{display:none !important}
+
+  /* ================= Confirm modal ================= */
+  #confirmModal .modal-content{padding:22px 18px calc(18px + env(safe-area-inset-bottom,0));text-align:center}
+  .confirm-icon{font-size:38px;margin-bottom:6px}
+  .confirm-title{font-size:17px;font-weight:600;margin:0 0 6px}
+  .confirm-msg{font-size:13.5px;color:var(--muted);line-height:1.6;margin:0 0 16px;white-space:pre-line}
+  .confirm-actions{display:flex;gap:8px}
+  .confirm-actions button{flex:1;padding:13px;border-radius:11px;border:none;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;min-height:46px}
+  .confirm-cancel{background:#f1f2f9;color:var(--text)}
+  .confirm-ok{background:var(--red);color:#fff}
+
+  /* ================= Toast ================= */
+  .toast{
+    position:fixed;bottom:calc(84px + env(safe-area-inset-bottom,0));left:50%;
+    transform:translateX(-50%) translateY(60px);
+    background:#1e2235;color:#fff;padding:11px 20px;border-radius:24px;
+    font-size:13.5px;font-weight:500;z-index:400;
+    opacity:0;transition:.28s;box-shadow:0 8px 24px rgba(0,0,0,.22);
+    max-width:calc(100vw - 40px);text-align:center;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+  /* ================= Reports styles ================= */
+  .report-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;background:#fff;border-radius:12px;padding:6px 8px;box-shadow:0 1px 6px rgba(30,34,53,.05)}
+  .report-nav button{width:36px;height:36px;border:none;border-radius:10px;background:#f1f2f9;color:var(--primary);font-size:17px;font-weight:700;cursor:pointer;line-height:1}
+  .report-nav button:active{background:#e6e8f5}
+  .report-nav .rlabel{font-size:14.5px;font-weight:600}
+
+  .report-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .report-stat{background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 1px 6px rgba(30,34,53,.05)}
+  .report-stat .rlabel{font-size:11px;color:var(--muted);margin-bottom:2px}
+  .report-stat .rvalue{font-size:16.5px;font-weight:700}
+  .report-stat.income .rvalue{color:var(--green)}
+  .report-stat.expense .rvalue{color:var(--red)}
+  .report-stat.net{grid-column:1/-1}
+  .report-stat.net .rvalue{color:var(--primary)}
+  .report-stat.net.neg .rvalue{color:var(--red)}
+
+  .report-section{margin-top:14px;background:#fff;border-radius:14px;padding:14px;box-shadow:0 1px 6px rgba(30,34,53,.05)}
+  .report-section h4{font-size:13px;font-weight:600;margin:0 0 10px;display:flex;align-items:center;gap:6px}
+
+  .compare-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;font-size:13px;border-bottom:1px solid var(--line)}
+  .compare-row:last-child{border-bottom:none}
+  .compare-row .cval{color:var(--muted);font-size:11.5px}
+  .compare-row .arrow{font-weight:700;font-size:12px;display:inline-block;margin-left:4px}
+  .compare-row .arrow.good{color:var(--green)}
+  .compare-row .arrow.bad{color:var(--red)}
+  .compare-row .arrow.neutral{color:var(--muted)}
+
+  .year-chart{display:flex;align-items:flex-end;justify-content:space-between;height:130px;padding:8px 0 0;gap:2px;border-bottom:1px solid var(--line)}
+  .year-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;gap:2px}
+  .year-bars{display:flex;gap:1px;align-items:flex-end;justify-content:center;width:100%;flex:1}
+  .year-bar{width:5px;border-radius:2px 2px 0 0;min-height:2px;transition:height .35s ease}
+  .year-bar.income{background:var(--green)}
+  .year-bar.expense{background:var(--red)}
+  .year-label{font-size:9px;color:var(--muted);white-space:nowrap;margin-top:3px}
+  .legend{display:flex;gap:14px;justify-content:center;margin-top:8px;font-size:11.5px;color:var(--muted)}
+  .legend span{display:flex;align-items:center;gap:4px}
+  .legend .dot{width:9px;height:9px;border-radius:2px}
+  .legend .dot.income{background:var(--green)}
+  .legend .dot.expense{background:var(--red)}
+
+  .insight{padding:10px 12px;border-radius:10px;font-size:12.5px;line-height:1.55;margin-top:10px}
+  .insight.good{background:#ecfdf5;color:#059669}
+  .insight.bad{background:#fef2f2;color:#dc2626}
+  .insight.info{background:#eff6ff;color:#2563eb}
+
+  /* ================= Settings ================= */
+  .settings-section{padding:14px 0;border-bottom:1px solid var(--line)}
+  .settings-section:last-child{border-bottom:none;padding-bottom:0}
+  .settings-section h3{font-size:14px;margin:0 0 6px;font-weight:600}
+  .settings-section .hint{font-size:12px;color:var(--muted);margin:0 0 12px;line-height:1.55}
+  .settings-section .hint b{color:var(--text)}
+  .check-row{display:flex;align-items:center;gap:8px;font-size:13.5px;margin:8px 0 12px;cursor:pointer;padding:8px 0}
+  .check-row input{width:20px;height:20px;accent-color:var(--primary);flex-shrink:0}
+  .sync-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .sync-actions button{flex:1 1 0;min-width:90px;padding:11px;border-radius:10px;border:1.5px solid var(--line);background:#fff;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--text);min-height:42px}
+  .sync-actions button:active{background:#f1f2f9}
+  .sync-actions button.primary{border:none;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+  .sync-actions button.danger-btn{color:var(--red);border-color:#fdd}
+  .sync-status{font-size:12.5px;margin-top:10px;padding:10px 12px;border-radius:10px;background:#f1f2f9;color:var(--muted);line-height:1.5;word-break:break-word}
+  .sync-status.ok{background:#ecfdf5;color:#059669}
+  .sync-status.err{background:#fef2f2;color:#dc2626}
+  .sync-status.info{background:#eff6ff;color:#2563eb}
+
+  /* ================= Categories ================= */
+  .cat-list{margin-bottom:12px}
+  .cat-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#fff;margin-bottom:6px;box-shadow:0 1px 4px rgba(30,34,53,.05)}
+  .cat-item .ci{font-size:18px;width:26px;text-align:center}
+  .cat-item .cn{flex:1;font-size:13.5px;font-weight:600}
+  .cat-item .cx{background:none;border:none;color:var(--red);font-size:15px;cursor:pointer;padding:6px 10px;border-radius:8px}
+  .cat-item .cx:active{background:#feeaea}
+  .cat-add{display:flex;gap:8px}
+  .cat-add input{padding:11px 12px;border-radius:10px;border:1.5px solid var(--line);font-family:inherit;font-size:16px;outline:none;background:#fff;min-height:44px}
+  .cat-add input:focus{border-color:var(--primary)}
+  .cat-add #newCatIcon{width:70px;text-align:center;font-size:18px}
+  .cat-add #newCatName{flex:1;min-width:0}
+  .cat-add button{padding:0 16px;border-radius:10px;border:none;background:var(--primary);color:#fff;font-size:20px;font-weight:600;cursor:pointer;min-height:44px;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER (fixed) -->
+  <header class="app-header">
+    <button class="hamburger" id="hamburgerBtn" aria-label="মেনু">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <h1 class="app-title">পারিবারিক হিসাব খাতা</h1>
+    <div class="sync-indicator" id="syncIndicator" title="সিঙ্ক স্ট্যাটাস"></div>
+  </header>
+
+  <!-- CONTENT (scrollable) -->
+  <main class="app-content" id="appContent">
+    <div class="bal-card">
+      <div class="bal-label">সর্বমোট ব্যালেন্স</div>
+      <div class="bal-value" id="balance">৳ ০</div>
+      <div class="bal-stats">
+        <div class="bal-stat"><span>এই মাসের আয়</span><b id="totalIncome">৳ ০</b></div>
+        <div class="bal-stat"><span>এই মাসের ব্যয়</span><b id="totalExpense">৳ ০</b></div>
+      </div>
+    </div>
+    <div class="month-bar">
+      <button id="prevMonth">‹</button>
+      <div id="monthLabel">—</div>
+      <button id="nextMonth">›</button>
+    </div>
+    <div class="tabs">
+      <button data-type="all" class="active">সব</button>
+      <button data-type="income">আয়</button>
+      <button data-type="expense">ব্যয়</button>
+    </div>
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="বিবরণ / খাত খুঁজুন...">
+    </div>
+    <div class="card" id="breakdownCard">
+      <button class="card-head" id="breakdownToggle">
+        <span>📊 খাত অনুযায়ী ব্যয়</span>
+        <span class="chev">▾</span>
+      </button>
+      <div class="breakdown-body" id="breakdownBody"></div>
+    </div>
+    <div id="list"></div>
+    <div id="empty" class="empty" style="display:none">
+      <span class="big">📒</span>
+      এই মাসে এখনো কোনো হিসাব নেই।<br>নিচের <b>+</b> বোতাম চেপে যোগ করুন।
+    </div>
+  </main>
+
+  <!-- FOOTER (fixed) -->
+  <nav class="app-footer">
+    <button class="fbtn active" data-nav="home">
+      <span class="fi">🏠</span><span class="fl">হোম</span>
+    </button>
+    <button class="fbtn" data-nav="reports">
+      <span class="fi">📈</span><span class="fl">রিপোর্ট</span>
+    </button>
+    <button class="fbtn add-fbtn" data-nav="add">
+      <span class="fab-circle">+</span>
+    </button>
+    <button class="fbtn" data-nav="digit">
+      <span class="fi">🌐</span><span class="fl" id="digitFooterLabel">১২৩</span>
+    </button>
+    <button class="fbtn" data-nav="settings">
+      <span class="fi">⚙️</span><span class="fl">সেটিংস</span>
+    </button>
+  </nav>
+
+  <!-- REPORTS PAGE (inside app, slides over) -->
+  <div class="page" id="reportsPage">
+    <header class="page-header">
+      <button class="page-back" data-close="reportsPage">←</button>
+      <h2 class="page-title">📈 রিপোর্ট</h2>
+      <div class="page-spacer"></div>
+    </header>
+    <div class="page-body">
+      <div class="type-toggle" id="reportToggle">
+        <button data-period="monthly" class="active">মাসিক</button>
+        <button data-period="yearly">বাৎসরিক</button>
+      </div>
+      <div id="reportContent"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE (inside app) -->
+  <div class="page" id="settingsPage">
+    <header class="page-header">
+      <button class="page-back" data-close="settingsPage">←</button>
+      <h2 class="page-title">⚙️ সেটিংস</h2>
+      <div class="page-spacer"></div>
+    </header>
+    <div class="page-body">
+      <div class="settings-section">
+        <h3>🔗 GitHub সিঙ্ক</h3>
+        <p class="hint">ডেটা আপনার নিজের GitHub <b>secret gist</b>-এ সংরক্ষিত হবে। টোকেন শুধু এই ব্রাউজারে থাকে। শুধু <b>gist</b> স্কোপ ব্যবহার করুন।</p>
+        <div class="field"><label>Personal Access Token</label><input type="password" id="ghToken" placeholder="ghp_..." autocomplete="off" spellcheck="false"></div>
+        <div class="field"><label>Gist ID</label><input type="text" id="ghGistId" placeholder="a1b2c3d4e5f6..." spellcheck="false"></div>
+        <label class="check-row"><input type="checkbox" id="autoSync"><span>প্রতিবার সেভে অটো-আপলোড</span></label>
+        <div class="sync-actions">
+          <button id="btnTest">🔌 টেস্ট</button>
+          <button id="btnPush">⬆ আপলোড</button>
+          <button id="btnPull">⬇ ডাউনলোড</button>
+        </div>
+        <div class="sync-actions">
+          <button id="btnCreateGist">✨ নতুন Gist</button>
+          <button id="btnSaveSettings" class="primary">সংরক্ষণ</button>
+        </div>
+        <div id="syncStatus" class="sync-status">—</div>
+      </div>
+
+      <div class="settings-section">
+        <h3>💾 ডেটা ব্যাকআপ</h3>
+        <p class="hint">ডেটা সবসময় ফোনে সেভ থাকে। ফাইল আকারেও ডাউনলোড করে রাখতে পারেন।</p>
+        <div class="sync-actions">
+          <button id="exportJSON">⬇ JSON</button>
+          <button id="exportCSV">⬇ CSV</button>
+          <button id="importJSON">⬆ রিস্টোর</button>
+        </div>
+        <div class="sync-actions" style="margin-top:6px">
+          <button id="btnRestorePrev" style="flex:1">↺ পূর্ববর্তী</button>
+          <button id="btnClearAll" class="danger-btn" style="flex:1">🗑 সব মুছুন</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORIES PAGE (inside app) -->
+  <div class="page" id="categoriesPage">
+    <header class="page-header">
+      <button class="page-back" data-close="categoriesPage">←</button>
+      <h2 class="page-title">📂 খাত পরিচালনা</h2>
+      <div class="page-spacer"></div>
+    </header>
+    <div class="page-body">
+      <div class="type-toggle" id="catTypeToggle">
+        <button data-ct="expense" class="active">ব্যয়ের খাত</button>
+        <button data-ct="income">আয়ের খাত</button>
+      </div>
+      <div class="cat-list" id="catList"></div>
+      <div class="settings-section" style="padding:0;border:none">
+        <h3>নতুন খাত যোগ করুন</h3>
+        <div class="cat-add">
+          <input type="text" id="newCatIcon" placeholder="📌" maxlength="4">
+          <input type="text" id="newCatName" placeholder="নাম লিখুন">
+          <button id="addCatBtn">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- DRAWER (outside app) -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h2>🏠 হিসাব খাতা</h2>
+    <p>পরিবারের সব হিসাব এক জায়গায়</p>
+  </div>
+  <nav class="drawer-menu">
+    <button class="dmi" data-action="home"><span class="dmi-icon">🏠</span>হোম</button>
+    <button class="dmi" data-action="reports"><span class="dmi-icon">📈</span>রিপোর্ট</button>
+    <button class="dmi" data-action="categories"><span class="dmi-icon">📂</span>খাত পরিচালনা</button>
+    <button class="dmi" data-action="settings"><span class="dmi-icon">⚙️</span>সেটিংস</button>
+    <div class="drawer-divider"></div>
+    <button class="dmi" data-action="github"><span class="dmi-icon">🔗</span>GitHub সিঙ্ক</button>
+    <button class="dmi" data-action="backup"><span class="dmi-icon">💾</span>JSON ব্যাকআপ</button>
+    <button class="dmi" data-action="csv"><span class="dmi-icon">📊</span>CSV এক্সপোর্ট</button>
+    <button class="dmi" data-action="restore"><span class="dmi-icon">⬆️</span>ফাইল রিস্টোর</button>
+    <button class="dmi" data-action="restorePrev"><span class="dmi-icon">↺</span>পূর্ববর্তী ব্যাকআপ</button>
+    <div class="drawer-divider"></div>
+    <button class="dmi" data-action="digit"><span class="dmi-icon">🌐</span>বাংলা / English</button>
+    <button class="dmi danger" data-action="clearAll"><span class="dmi-icon">🗑️</span>সব ডেটা মুছুন</button>
+  </nav>
+  <div class="drawer-footer">সংস্করণ ২.২ · লোকাল + ক্লাউড</div>
+</aside>
+
+<!-- ENTRY MODAL -->
+<div class="modal" id="entryModal">
+  <div class="modal-content">
+    <div class="sheet-handle"></div>
+    <div class="modal-head">
+      <h2 id="modalTitle">নতুন এন্ট্রি</h2>
+      <button id="closeEntry">✕</button>
+    </div>
+    <div class="type-toggle">
+      <button data-t="expense" class="active">ব্যয়</button>
+      <button data-t="income">আয়</button>
+    </div>
+    <div class="field"><label>পরিমাণ (৳)</label><input type="number" id="amount" inputmode="decimal" placeholder="0" step="any" min="0"></div>
+    <div class="field"><label>খাত</label><select id="category"></select></div>
+    <div class="field"><label>তারিখ</label><input type="date" id="date"></div>
+    <div class="field"><label>বিবরণ (ঐচ্ছিক)</label><input type="text" id="note" placeholder="যেমন: সাপ্তাহিক বাজার" maxlength="80"></div>
+    <div class="modal-actions">
+      <button id="deleteEntryBtn" class="danger hidden">🗑 মুছুন</button>
+      <button id="saveEntryBtn" class="primary">সংরক্ষণ করুন</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal" id="confirmModal">
+  <div class="modal-content">
+    <div class="sheet-handle"></div>
+    <div class="confirm-icon" id="confirmIcon">⚠️</div>
+    <h3 class="confirm-title" id="confirmTitle">নিশ্চিত?</h3>
+    <p class="confirm-msg" id="confirmMsg">...</p>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" id="confirmCancel">বাতিল</button>
+      <button class="confirm-ok" id="confirmOk">হ্যাঁ, চালিয়ে যান</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="importFile" accept=".json,application/json" hidden>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ==================== Constants ==================== */
+  const STORE_KEY = 'familyBudget_v2';
+  const LEGACY_KEY = 'familyBudget_v1';
+  const GH_KEY = 'familyBudget_gh';
+  const PREV_KEY = 'familyBudget_prev';
+  const PREFS_KEY = 'familyBudget_prefs';
+  const MAX_BACKUPS = 3;
+
+  const DEFAULT_CATS = {
+    expense: [
+      {id:'food',name:'খাবার',icon:'🍚'},{id:'bazar',name:'বাজার',icon:'🛒'},
+      {id:'rent',name:'বাসা ভাড়া',icon:'🏠'},{id:'utility',name:'বিদ্যুৎ/পানি',icon:'💡'},
+      {id:'gas',name:'গ্যাস',icon:'🔥'},{id:'internet',name:'ইন্টারনেট',icon:'🌐'},
+      {id:'mobile',name:'মোবাইল রিচার্জ',icon:'📱'},{id:'transport',name:'যাতায়াত',icon:'🚌'},
+      {id:'education',name:'শিক্ষা',icon:'📚'},{id:'health',name:'চিকিৎসা',icon:'💊'},
+      {id:'clothes',name:'পোশাক',icon:'👕'},{id:'festival',name:'ঈদ/উৎসব',icon:'🎉'},
+      {id:'loan',name:'কিস্তি/ঋণ',icon:'🏦'},{id:'saving',name:'সঞ্চয়',icon:'💰'},
+      {id:'other_exp',name:'অন্যান্য',icon:'📌'}
+    ],
+    income: [
+      {id:'salary',name:'বেতন',icon:'💵'},{id:'business',name:'ব্যবসা',icon:'🏪'},
+      {id:'rent_in',name:'বাড়ি ভাড়া',icon:'🏘️'},{id:'bonus',name:'বোনাস',icon:'🎁'},
+      {id:'gift',name:'উপহার',icon:'🎀'},{id:'other_inc',name:'অন্যান্য',icon:'📌'}
+    ]
+  };
+
+  const MONTHS_BN = ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+  const DAYS_BN = ['রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার','শনিবার'];
+  const BN_DIGITS = '০১২৩৪৫৬৭৮৯';
+  const COLORS = ['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#06b6d4','#f43f5e','#84cc16','#a855f7','#0ea5e9'];
+
+  /* ==================== Helpers (must be declared FIRST — TDZ-safe) ==================== */
+  const $ = id => document.getElementById(id);
+  const clone = o => JSON.parse(JSON.stringify(o));
+
+  /* ==================== State ==================== */
+  let state = loadState();
+  let gh = loadGh();
+  let prefs = loadPrefs();
+  let currentMonth = ym(new Date());
+  let filter = 'all';
+  let searchQuery = '';
+  let editingId = null;
+  let formType = 'expense';
+  let catType = 'expense';
+  let pushTimer = null;
+  let reportPeriod = 'monthly';
+  let reportMonth = '';
+  let reportYear = 0;
+  let toastTimer = null;
+  let syncing = false;
+  let lastSyncError = null;
+
+  /* ==================== Load/Save ==================== */
+  function loadState(){
+    try {
+      const s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+      if (s && Array.isArray(s.entries) && s.categories)
+        return { entries: s.entries, categories: s.categories, updatedAt: s.updatedAt || 0 };
+    } catch(e){}
+    try {
+      const v1 = JSON.parse(localStorage.getItem(LEGACY_KEY) || 'null');
+      if (Array.isArray(v1))
+        return { entries: v1, categories: clone(DEFAULT_CATS), updatedAt: Date.now() };
+    } catch(e){}
+    return { entries: [], categories: clone(DEFAULT_CATS), updatedAt: 0 };
+  }
+  function loadGh(){
+    try {
+      const g = JSON.parse(localStorage.getItem(GH_KEY) || 'null');
+      if (g) return { token: g.token||'', gistId: g.gistId||'', autoSync: g.autoSync !== false, lastSync: g.lastSync||0 };
+    } catch(e){}
+    return { token:'', gistId:'', autoSync:true, lastSync:0 };
+  }
+  function loadPrefs(){
+    try { return Object.assign({ bn:false }, JSON.parse(localStorage.getItem(PREFS_KEY) || '{}')); }
+    catch(e){ return { bn:false }; }
+  }
+  function persist(silent){
+    state.updatedAt = Date.now();
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch(e){}
+    if (!silent && gh.token && gh.gistId && gh.autoSync) schedulePush();
+  }
+  function saveGh(){ localStorage.setItem(GH_KEY, JSON.stringify(gh)); }
+  function savePrefs(){ localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); }
+
+  /* ==================== Helpers ==================== */
+  function bnMode(){ return prefs.bn; }
+  function toBn(s){ return String(s).replace(/[0-9]/g, d => BN_DIGITS[+d]); }
+  function num(n){
+    const s = Math.abs(n).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    return bnMode() ? toBn(s) : s;
+  }
+  function money(n){ return '৳ ' + num(n); }
+
+  function ym(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+  function todayStr(){ const d = new Date(); return ym(d) + '-' + String(d.getDate()).padStart(2,'0'); }
+  function parseDate(s){ const p = s.split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
+  function monthLabel(m){ const p = m.split('-').map(Number); return MONTHS_BN[p[1]-1] + ' ' + (bnMode() ? toBn(p[0]) : p[0]); }
+  function fmtDate(s){
+    const d = parseDate(s);
+    const day = bnMode() ? toBn(d.getDate()) : d.getDate();
+    return day + ' ' + MONTHS_BN[d.getMonth()] + ', ' + DAYS_BN[d.getDay()];
+  }
+  function sum(arr){ return arr.reduce((s,e)=> s + Number(e.amount||0), 0); }
+  function getCat(type, id){ return (state.categories[type]||[]).find(c => c.id === id); }
+  function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function prevMonthKey(k){
+    let p = k.split('-').map(Number), y = p[0], m = p[1] - 1;
+    if (m < 1){ m = 12; y--; }
+    return y + '-' + String(m).padStart(2,'0');
+  }
+  function vibrate(ms){ if (navigator.vibrate) { try { navigator.vibrate(ms || 8); } catch(e){} } }
+
+  function showToast(msg){
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  /* ==================== Confirm dialog ==================== */
+  function confirmDialog(msg, opts){
+    opts = opts || {};
+    return new Promise(resolve => {
+      $('confirmIcon').textContent = opts.icon || '⚠️';
+      $('confirmTitle').textContent = opts.title || 'নিশ্চিত?';
+      $('confirmMsg').textContent = msg;
+      $('confirmOk').textContent = opts.okText || 'হ্যাঁ';
+      $('confirmCancel').textContent = opts.cancelText || 'বাতিল';
+      $('confirmOk').style.background = opts.okColor || 'var(--red)';
+      $('confirmModal').classList.add('open');
+      vibrate(15);
+      const onOk = () => { cleanup(); resolve(true); };
+      const onCancel = () => { cleanup(); resolve(false); };
+      const cleanup = () => {
+        $('confirmModal').classList.remove('open');
+        $('confirmOk').removeEventListener('click', onOk);
+        $('confirmCancel').removeEventListener('click', onCancel);
+      };
+      $('confirmOk').addEventListener('click', onOk);
+      $('confirmCancel').addEventListener('click', onCancel);
+    });
+  }
+
+  function pushBackup(){
+    try {
+      const prev = JSON.parse(localStorage.getItem(PREV_KEY) || '[]');
+      const current = localStorage.getItem(STORE_KEY);
+      if (!current) return;
+      prev.unshift({ at: Date.now(), data: current });
+      while (prev.length > MAX_BACKUPS) prev.pop();
+      localStorage.setItem(PREV_KEY, JSON.stringify(prev));
+    } catch(e){}
+  }
+
+  /* ==================== Render main ==================== */
+  function render(){
+    const monthEntries = state.entries.filter(e => e.date.slice(0,7) === currentMonth);
+    const inc = sum(monthEntries.filter(e => e.type === 'income'));
+    const exp = sum(monthEntries.filter(e => e.type === 'expense'));
+    const allInc = sum(state.entries.filter(e => e.type === 'income'));
+    const allExp = sum(state.entries.filter(e => e.type === 'expense'));
+    const bal = allInc - allExp;
+
+    const balEl = $('balance');
+    balEl.textContent = money(bal);
+    balEl.classList.toggle('neg', bal < 0);
+    $('totalIncome').textContent = money(inc);
+    $('totalExpense').textContent = money(exp);
+    $('monthLabel').textContent = monthLabel(currentMonth);
+    $('digitFooterLabel').textContent = prefs.bn ? '123' : '১২৩';
+
+    renderList(monthEntries);
+    renderBreakdown(monthEntries);
+    renderSyncStatus();
+  }
+
+  function renderList(monthEntries){
+    const listEl = $('list'), emptyEl = $('empty');
+    let filtered = monthEntries.filter(e => filter === 'all' || e.type === filter);
+    if (searchQuery){
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(e => {
+        const c = getCat(e.type, e.cat);
+        return (e.note||'').toLowerCase().includes(q) || (c ? c.name.toLowerCase().includes(q) : false);
+      });
+    }
+    filtered.sort((a,b)=> b.date.localeCompare(a.date) || (b.created||0) - (a.created||0));
+    if (!filtered.length){ listEl.innerHTML = ''; emptyEl.style.display = 'block'; return; }
+    emptyEl.style.display = 'none';
+
+    const groups = {};
+    filtered.forEach(e => { (groups[e.date] = groups[e.date]||[]).push(e); });
+
+    let html = '';
+    Object.keys(groups).sort().reverse().forEach(date => {
+      const items = groups[date];
+      const dayTotal = items.reduce((s,e)=> s + (e.type === 'expense' ? -e.amount : e.amount), 0);
+      html += `<div class="day-head"><span>${fmtDate(date)}</span><span class="${dayTotal<0?'neg':'pos'}">${dayTotal<0?'-':'+'}${money(dayTotal)}</span></div>`;
+      items.forEach(e => {
+        const c = getCat(e.type, e.cat);
+        html += `<div class="item" data-id="${e.id}">
+          <div class="ico ${e.type}">${c?c.icon:'📌'}</div>
+          <div class="meta">
+            <div class="ttl">${c?esc(c.name):'অন্যান্য'}</div>
+            ${e.note?`<div class="sub">${esc(e.note)}</div>`:''}
+          </div>
+          <div class="item-right">
+            <div class="amt ${e.type}">${e.type==='expense'?'-':'+'}${money(e.amount)}</div>
+            <button class="del-btn" data-del="${e.id}" aria-label="মুছুন">🗑</button>
+          </div>
+        </div>`;
+      });
+    });
+    listEl.innerHTML = html;
+  }
+
+  function renderBreakdown(monthEntries){
+    const body = $('breakdownBody');
+    const exp = monthEntries.filter(e => e.type === 'expense');
+    const total = sum(exp);
+    if (!total){
+      body.innerHTML = `<div style="font-size:13px;color:var(--muted);padding:4px 0 6px">এই মাসে এখনো কোনো ব্যয় নেই।</div>`;
+      return;
+    }
+    const byCat = {};
+    exp.forEach(e => { byCat[e.cat] = (byCat[e.cat]||0) + e.amount; });
+    const arr = Object.entries(byCat).sort((a,b)=> b[1]-a[1]);
+    body.innerHTML = arr.map(([id, amt], i) => {
+      const c = getCat('expense', id);
+      const pct = Math.round((amt/total)*100);
+      const color = COLORS[i % COLORS.length];
+      return `<div class="bar-row">
+        <div class="bar-top"><span>${c?c.icon+' '+esc(c.name):'📌 অন্যান্য'}</span><span>${money(amt)} · ${bnMode()?toBn(pct):pct}%</span></div>
+        <div class="bar"><div class="fill" style="width:${pct}%;background:${color}"></div></div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderSyncStatus(){
+    const ind = $('syncIndicator');
+    if (!gh.token || !gh.gistId){ ind.className = 'sync-indicator'; ind.title = 'সিঙ্ক বন্ধ'; return; }
+    if (syncing){ ind.className = 'sync-indicator sync'; ind.title = 'সিঙ্ক চলছে...'; return; }
+    if (lastSyncError){ ind.className = 'sync-indicator err'; ind.title = 'সিঙ্ক ব্যর্থ: ' + lastSyncError; return; }
+    ind.className = 'sync-indicator ok';
+    ind.title = gh.lastSync ? 'সর্বশেষ সিঙ্ক: ' + new Date(gh.lastSync).toLocaleTimeString('bn-BD') : 'সিঙ্ক চালু';
+  }
+
+  /* ==================== Entry modal ==================== */
+  function populateCategorySelect(){
+    const cats = state.categories[formType] || [];
+    $('category').innerHTML = cats.map(c => `<option value="${c.id}">${c.icon} ${esc(c.name)}</option>`).join('');
+  }
+  function setFormType(t){
+    formType = t;
+    document.querySelectorAll('#entryModal .type-toggle button').forEach(b => b.classList.toggle('active', b.dataset.t === t));
+    populateCategorySelect();
+  }
+  function defaultDate(){ return ym(new Date()) === currentMonth ? todayStr() : currentMonth + '-01'; }
+
+  function openEntryModal(entry){
+    editingId = entry ? entry.id : null;
+    setFormType(entry ? entry.type : 'expense');
+    $('amount').value = entry ? entry.amount : '';
+    $('date').value = entry ? entry.date : defaultDate();
+    $('note').value = entry ? (entry.note||'') : '';
+    $('category').value = entry ? entry.cat : (state.categories[formType][0] ? state.categories[formType][0].id : '');
+    $('modalTitle').textContent = entry ? 'এন্ট্রি সম্পাদনা' : 'নতুন এন্ট্রি';
+    $('deleteEntryBtn').classList.toggle('hidden', !entry);
+    $('entryModal').classList.add('open');
+    vibrate(8);
+    if (!entry) setTimeout(()=> { try { $('amount').focus(); } catch(e){} }, 250);
+  }
+  function closeEntryModal(){ $('entryModal').classList.remove('open'); editingId = null; }
+
+  function saveEntry(){
+    const amount = parseFloat($('amount').value);
+    if (!amount || amount <= 0 || isNaN(amount)){ showToast('সঠিক পরিমাণ লিখুন'); try { $('amount').focus(); } catch(e){} return; }
+    const date = $('date').value || todayStr();
+    const cat = $('category').value;
+    const note = $('note').value.trim();
+    if (!cat){ showToast('আগে একটি খাত নির্বাচন করুন'); return; }
+    if (editingId){
+      const e = state.entries.find(x => x.id === editingId);
+      if (e) Object.assign(e, { type: formType, amount, date, cat, note });
+    } else {
+      state.entries.push({ id: Date.now() + Math.floor(Math.random()*1000), created: Date.now(), type: formType, amount, date, cat, note });
+    }
+    currentMonth = date.slice(0,7);
+    closeEntryModal(); persist(); render();
+    showToast('✓ সংরক্ষণ হয়েছে'); vibrate(15);
+  }
+
+  async function deleteEntryFromModal(){
+    if (!editingId) return;
+    const e = state.entries.find(x => x.id === editingId);
+    if (!e) return;
+    const c = getCat(e.type, e.cat);
+    closeEntryModal();
+    const ok = await confirmDialog(
+      `${c ? c.name : 'অন্যান্য'} — ${money(e.amount)}\n${fmtDate(e.date)}\n\nএই এন্ট্রিটি মুছে ফেলবেন?`,
+      { icon:'🗑️', title:'এন্ট্রি মুছবেন?', okText:'হ্যাঁ, মুছুন' }
+    );
+    if (!ok) return;
+    state.entries = state.entries.filter(x => x.id !== editingId);
+    editingId = null;
+    persist(); render();
+    showToast('✓ মুছে ফেলা হয়েছে'); vibrate(20);
+  }
+
+  async function deleteEntryById(id){
+    const e = state.entries.find(x => x.id === id);
+    if (!e) return;
+    const c = getCat(e.type, e.cat);
+    const ok = await confirmDialog(
+      `${c ? c.name : 'অন্যান্য'} — ${money(e.amount)}\n${fmtDate(e.date)}\n\nএই এন্ট্রিটি মুছে ফেলবেন?`,
+      { icon:'🗑️', title:'এন্ট্রি মুছবেন?', okText:'হ্যাঁ, মুছুন' }
+    );
+    if (!ok) return;
+    state.entries = state.entries.filter(x => x.id !== id);
+    persist(); render();
+    showToast('✓ মুছে ফেলা হয়েছে'); vibrate(20);
+  }
+
+  /* ==================== Categories ==================== */
+  function renderCatList(){
+    const list = $('catList');
+    const cats = state.categories[catType] || [];
+    if (!cats.length){
+      list.innerHTML = `<div style="font-size:13px;color:var(--muted);text-align:center;padding:20px">কোনো খাত নেই। নিচ থেকে যোগ করুন।</div>`;
+      return;
+    }
+    list.innerHTML = cats.map(c => `<div class="cat-item">
+      <span class="ci">${c.icon||'📌'}</span>
+      <span class="cn">${esc(c.name)}</span>
+      <button class="cx" data-del="${c.id}">✕</button>
+    </div>`).join('');
+  }
+  function addCategory(){
+    const name = $('newCatName').value.trim();
+    const icon = $('newCatIcon').value.trim() || '📌';
+    if (!name){ showToast('খাতের নাম লিখুন'); return; }
+    if (!state.categories[catType]) state.categories[catType] = [];
+    const id = 'custom_' + catType + '_' + Date.now();
+    state.categories[catType].push({ id, name, icon });
+    $('newCatName').value = ''; $('newCatIcon').value = '';
+    renderCatList(); persist(); render();
+    showToast('✓ নতুন খাত যোগ হয়েছে'); vibrate(15);
+  }
+  async function deleteCategory(id){
+    const inUse = state.entries.some(e => e.cat === id);
+    const c = state.categories[catType].find(x => x.id === id);
+    if (!c) return;
+    const msg = inUse
+      ? `"${c.name}" খাতে কিছু এন্ট্রি আছে। মুছলে সেগুলো "অন্যান্য" দেখাবে।`
+      : `"${c.name}" খাতটি মুছে ফেলবেন?`;
+    const ok = await confirmDialog(msg, { icon:'🗑️', title:'খাত মুছবেন?', okText:'হ্যাঁ, মুছুন' });
+    if (!ok) return;
+    state.categories[catType] = state.categories[catType].filter(x => x.id !== id);
+    renderCatList(); persist(); render();
+    showToast('✓ খাত মুছে ফেলা হয়েছে');
+  }
+
+  /* ==================== Reports ==================== */
+  function changeArrow(pct, isExpense){
+    if (Math.abs(pct) < 0.5) return '<span class="arrow neutral">—</span>';
+    const up = pct > 0;
+    const good = isExpense ? !up : up;
+    const cls = good ? 'good' : 'bad';
+    const arrow = up ? '▲' : '▼';
+    const val = Math.abs(pct).toFixed(0);
+    return `<span class="arrow ${cls}">${arrow} ${bnMode()?toBn(val):val}%</span>`;
+  }
+  function renderCatBreakdown(entries, type, title){
+    const filtered = entries.filter(e => e.type === type);
+    const total = sum(filtered);
+    if (!total){
+      return `<div class="report-section"><h4>${title}</h4><div style="font-size:12.5px;color:var(--muted);padding:6px 0">কোনো ${type === 'income' ? 'আয়' : 'ব্যয়'} নেই</div></div>`;
+    }
+    const byCat = {};
+    filtered.forEach(e => { byCat[e.cat] = (byCat[e.cat]||0) + e.amount; });
+    const arr = Object.entries(byCat).sort((a,b)=> b[1]-a[1]);
+    const bars = arr.map(([id, amt], i) => {
+      const c = getCat(type, id);
+      const pct = Math.round((amt/total)*100);
+      const color = COLORS[i % COLORS.length];
+      return `<div class="bar-row">
+        <div class="bar-top"><span>${c?c.icon+' '+esc(c.name):'📌 অন্যান্য'}</span><span>${money(amt)} · ${bnMode()?toBn(pct):pct}%</span></div>
+        <div class="bar"><div class="fill" style="width:${pct}%;background:${color}"></div></div>
+      </div>`;
+    }).join('');
+    return `<div class="report-section"><h4>${title}</h4>${bars}</div>`;
+  }
+  function renderMonthlyReport(){
+    const entries = state.entries.filter(e => e.date.slice(0,7) === reportMonth);
+    const inc = sum(entries.filter(e => e.type === 'income'));
+    const exp = sum(entries.filter(e => e.type === 'expense'));
+    const net = inc - exp;
+    const prevKey = prevMonthKey(reportMonth);
+    const prevEntries = state.entries.filter(e => e.date.slice(0,7) === prevKey);
+    const prevInc = sum(prevEntries.filter(e => e.type === 'income'));
+    const prevExp = sum(prevEntries.filter(e => e.type === 'expense'));
+    const incChange = prevInc === 0 ? (inc > 0 ? 100 : 0) : ((inc - prevInc) / prevInc) * 100;
+    const expChange = prevExp === 0 ? (exp > 0 ? 100 : 0) : ((exp - prevExp) / prevExp) * 100;
+
+    const savingsRate = inc > 0 ? ((net / inc) * 100) : 0;
+    let insight = '';
+    if (net > 0){
+      insight = `<div class="insight good">✅ এই মাসে সঞ্চয় <b>${money(net)}</b> (আয়ের ${bnMode()?toBn(savingsRate.toFixed(0)):savingsRate.toFixed(0)}%)</div>`;
+    } else if (net < 0){
+      insight = `<div class="insight bad">⚠️ ব্যয় আয়ের চেয়ে <b>${money(Math.abs(net))}</b> বেশি।</div>`;
+    } else if (inc > 0){
+      insight = `<div class="insight info">আয় ও ব্যয় সমান।</div>`;
+    } else {
+      insight = `<div class="insight info">এই মাসে কোনো লেনদেন নেই।</div>`;
+    }
+
+    return `
+      <div class="report-nav">
+        <button data-nav="prev-month">‹</button>
+        <div class="rlabel">${monthLabel(reportMonth)}</div>
+        <button data-nav="next-month">›</button>
+      </div>
+      <div class="report-summary">
+        <div class="report-stat income"><div class="rlabel">মোট আয়</div><div class="rvalue">${money(inc)}</div></div>
+        <div class="report-stat expense"><div class="rlabel">মোট ব্যয়</div><div class="rvalue">${money(exp)}</div></div>
+        <div class="report-stat net ${net<0?'neg':''}"><div class="rlabel">নেট (আয় − ব্যয়)</div><div class="rvalue">${money(net)}</div></div>
+      </div>
+      ${insight}
+      <div class="report-section">
+        <h4>📊 গত মাসের তুলনায়</h4>
+        <div class="compare-row"><span>আয়</span><span><span class="cval">${money(prevInc)} → ${money(inc)}</span> ${changeArrow(incChange, false)}</span></div>
+        <div class="compare-row"><span>ব্যয়</span><span><span class="cval">${money(prevExp)} → ${money(exp)}</span> ${changeArrow(expChange, true)}</span></div>
+      </div>
+      ${renderCatBreakdown(entries, 'expense', '📉 ব্যয়ের খাত')}
+      ${renderCatBreakdown(entries, 'income', '📈 আয়ের খাত')}
+    `;
+  }
+  function renderYearlyReport(){
+    const yearMonths = [];
+    for (let m = 1; m <= 12; m++){
+      const key = reportYear + '-' + String(m).padStart(2,'0');
+      const mEntries = state.entries.filter(e => e.date.slice(0,7) === key);
+      yearMonths.push({
+        key,
+        inc: sum(mEntries.filter(e => e.type === 'income')),
+        exp: sum(mEntries.filter(e => e.type === 'expense'))
+      });
+    }
+    const totalInc = yearMonths.reduce((s,m)=> s+m.inc, 0);
+    const totalExp = yearMonths.reduce((s,m)=> s+m.exp, 0);
+    const net = totalInc - totalExp;
+    const maxVal = Math.max(...yearMonths.map(d => Math.max(d.inc, d.exp)), 1);
+    const activeMonths = yearMonths.filter(m => m.inc > 0 || m.exp > 0).length || 1;
+    const avgInc = totalInc / activeMonths;
+    const avgExp = totalExp / activeMonths;
+    const yearLabel = bnMode() ? toBn(reportYear) + ' সাল' : reportYear + '';
+
+    const chartHtml = yearMonths.map((m, i) => {
+      const incH = (m.inc / maxVal) * 100;
+      const expH = (m.exp / maxVal) * 100;
+      return `<div class="year-col">
+        <div class="year-bars">
+          <div class="year-bar income" style="height:${incH}%" title="আয়: ${money(m.inc)}"></div>
+          <div class="year-bar expense" style="height:${expH}%" title="ব্যয়: ${money(m.exp)}"></div>
+        </div>
+        <div class="year-label">${bnMode()?toBn(i+1):i+1}</div>
+      </div>`;
+    }).join('');
+
+    const yearEntries = state.entries.filter(e => e.date.slice(0,4) === String(reportYear));
+    let insight = '';
+    if (net > 0){
+      const rate = totalInc > 0 ? (net/totalInc)*100 : 0;
+      insight = `<div class="insight good">✅ ${yearLabel} মোট সঞ্চয় <b>${money(net)}</b> (আয়ের ${bnMode()?toBn(rate.toFixed(0)):rate.toFixed(0)}%)</div>`;
+    } else if (net < 0){
+      insight = `<div class="insight bad">⚠️ ${yearLabel} ব্যয় আয়ের চেয়ে <b>${money(Math.abs(net))}</b> বেশি।</div>`;
+    } else if (totalInc > 0){
+      insight = `<div class="insight info">${yearLabel} আয় ও ব্যয় সমান।</div>`;
+    } else {
+      insight = `<div class="insight info">${yearLabel} কোনো লেনদেন নেই।</div>`;
+    }
+
+    return `
+      <div class="report-nav">
+        <button data-nav="prev-year">‹</button>
+        <div class="rlabel">${yearLabel}</div>
+        <button data-nav="next-year">›</button>
+      </div>
+      <div class="report-summary">
+        <div class="report-stat income"><div class="rlabel">মোট আয়</div><div class="rvalue">${money(totalInc)}</div></div>
+        <div class="report-stat expense"><div class="rlabel">মোট ব্যয়</div><div class="rvalue">${money(totalExp)}</div></div>
+        <div class="report-stat net ${net<0?'neg':''}"><div class="rlabel">নেট সঞ্চয়</div><div class="rvalue">${money(net)}</div></div>
+        <div class="report-stat"><div class="rlabel">মাসিক গড় আয়</div><div class="rvalue" style="color:var(--green);font-size:15px">${money(avgInc)}</div></div>
+        <div class="report-stat"><div class="rlabel">মাসিক গড় ব্যয়</div><div class="rvalue" style="color:var(--red);font-size:15px">${money(avgExp)}</div></div>
+      </div>
+      ${insight}
+      <div class="report-section">
+        <h4>📅 ১২ মাসের আয়-ব্যয়</h4>
+        <div class="year-chart">${chartHtml}</div>
+        <div class="legend">
+          <span><span class="dot income"></span>আয়</span>
+          <span><span class="dot expense"></span>ব্যয়</span>
+        </div>
+      </div>
+      ${renderCatBreakdown(yearEntries, 'expense', '📉 বছরের ব্যয়ের খাত')}
+      ${renderCatBreakdown(yearEntries, 'income', '📈 বছরের আয়ের খাত')}
+    `;
+  }
+  function renderReport(){
+    $('reportContent').innerHTML = reportPeriod === 'monthly' ? renderMonthlyReport() : renderYearlyReport();
+  }
+
+  /* ==================== Pages ==================== */
+  function openPage(id){ $(id).classList.add('open'); vibrate(8); }
+  function closePage(id){ $(id).classList.remove('open'); }
+  function openReportsPage(){
+    reportPeriod = 'monthly';
+    reportMonth = currentMonth;
+    reportYear = parseInt(currentMonth.slice(0,4));
+    document.querySelectorAll('#reportToggle button').forEach(b => b.classList.toggle('active', b.dataset.period === 'monthly'));
+    renderReport();
+    openPage('reportsPage');
+  }
+  function openSettingsPage(){
+    $('ghToken').value = gh.token;
+    $('ghGistId').value = gh.gistId;
+    $('autoSync').checked = gh.autoSync;
+    $('syncStatus').textContent = gh.token && gh.gistId ? 'প্রস্তুত' : '—';
+    $('syncStatus').className = 'sync-status ' + (gh.token && gh.gistId ? 'info' : '');
+    openPage('settingsPage');
+  }
+  function openCategoriesPage(){
+    catType = 'expense';
+    document.querySelectorAll('#catTypeToggle button').forEach(b => b.classList.toggle('active', b.dataset.ct === 'expense'));
+    renderCatList();
+    openPage('categoriesPage');
+  }
+
+  /* ==================== GitHub Sync ==================== */
+  const GH_API = 'https://api.github.com';
+  async function ghRequest(path, method, body){
+    const res = await fetch(GH_API + path, {
+      method: method || 'GET',
+      headers: { 'Authorization': 'token ' + gh.token, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (!res.ok){ const t = await res.text(); throw new Error('HTTP ' + res.status + ' — ' + t.slice(0,120)); }
+    return res.json();
+  }
+  async function testConnection(){
+    try { const u = await ghRequest('/user'); return '✅ সংযুক্ত: ' + u.login; }
+    catch(e){ throw new Error('❌ সংযোগ ব্যর্থ: ' + e.message); }
+  }
+  async function createGist(){
+    if (!gh.token) throw new Error('আগে টোকেন দিন');
+    const res = await ghRequest('/gists', 'POST', {
+      description: 'Family Budget Data — ' + new Date().toISOString(),
+      public: false,
+      files: { 'budget.json': { content: JSON.stringify(state, null, 2) } }
+    });
+    return res.id;
+  }
+  async function pushToGist(){
+    if (!gh.token || !gh.gistId) throw new Error('টোকেন ও Gist ID দুটোই দরকার');
+    state.updatedAt = Date.now();
+    await ghRequest('/gists/' + gh.gistId, 'PATCH', { files: { 'budget.json': { content: JSON.stringify(state, null, 2) } } });
+    gh.lastSync = Date.now(); saveGh();
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    return '✅ আপলোড সম্পন্ন';
+  }
+  async function pullFromGist(){
+    if (!gh.token || !gh.gistId) throw new Error('টোকেন ও Gist ID দুটোই দরকার');
+    const g = await ghRequest('/gists/' + gh.gistId);
+    const file = g.files && g.files['budget.json'];
+    if (!file) throw new Error('gist-এ budget.json নেই');
+    let content = file.content;
+    if (file.truncated && file.raw_url){
+      const r = await fetch(file.raw_url, { headers: { 'Authorization': 'token ' + gh.token } });
+      content = await r.text();
+    }
+    const remote = JSON.parse(content);
+    if (!remote || !Array.isArray(remote.entries)) throw new Error('ফরম্যাট সঠিক নয়');
+    pushBackup();
+    const ok = await confirmDialog('লোকাল ডেটা রিমোট ডেটা দিয়ে প্রতিস্থাপিত হবে। চালিয়ে যাবেন?', { title:'ডাউনলোড করবেন?', okText:'হ্যাঁ' });
+    if (!ok) return 'বাতিল';
+    state = { entries: remote.entries, categories: remote.categories || clone(DEFAULT_CATS), updatedAt: remote.updatedAt || Date.now() };
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    gh.lastSync = Date.now(); saveGh(); render();
+    return '✅ ডাউনলোড সম্পন্ন (' + state.entries.length + ' এন্ট্রি)';
+  }
+  function schedulePush(){
+    if (pushTimer) clearTimeout(pushTimer);
+    pushTimer = setTimeout(async ()=>{
+      try { await pushToGist(); renderSyncStatus(); }
+      catch(e){
+        console.warn('Auto-push failed:', e.message);
+        lastSyncError = e.message;
+        renderSyncStatus();
+      }
+    }, 1500);
+  }
+  function setSyncStatus(msg, cls){ const el = $('syncStatus'); el.textContent = msg; el.className = 'sync-status ' + (cls || ''); }
+
+  /* ==================== Export/Import ==================== */
+  function download(blob, name){
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=> URL.revokeObjectURL(a.href), 1000);
+  }
+  function exportJSON(){
+    if (!state.entries.length){ showToast('ব্যাকআপ নেওয়ার ডেটা নেই'); return; }
+    download(new Blob([JSON.stringify(state, null, 2)], {type:'application/json'}), 'hisab-backup-' + todayStr() + '.json');
+    showToast('✓ JSON ডাউনলোড হয়েছে');
+  }
+  function exportCSV(){
+    if (!state.entries.length){ showToast('কোনো ডেটা নেই'); return; }
+    const rows = [['Date','Type','Category','Amount','Note']];
+    state.entries.slice().sort((a,b)=> a.date.localeCompare(b.date)).forEach(e => {
+      const c = getCat(e.type, e.cat);
+      rows.push([e.date, e.type, c?c.name:e.cat, e.amount, (e.note||'').replace(/"/g,'""')]);
+    });
+    const csv = rows.map(r => r.map(x => `"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
+    download(new Blob(['\ufeff' + csv], {type:'text/csv;charset=utf-8'}), 'hisab-' + todayStr() + '.csv');
+    showToast('✓ CSV ডাউনলোড হয়েছে');
+  }
+  function importJSON(file){
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        let obj = JSON.parse(r.result);
+        if (Array.isArray(obj)) obj = { entries: obj, categories: clone(DEFAULT_CATS), updatedAt: Date.now() };
+        if (!obj || !Array.isArray(obj.entries)) throw new Error('bad');
+        pushBackup();
+        const ids = new Set(state.entries.map(x => x.id));
+        let added = 0;
+        obj.entries.forEach(x => { if (x && x.date && x.amount && x.type && !ids.has(x.id)){ state.entries.push(x); ids.add(x.id); added++; } });
+        persist(); render();
+        showToast(added + ' টি এন্ট্রি যোগ হয়েছে');
+      } catch(e){ showToast('ফাইল সঠিক ব্যাকআপ নয়'); }
+    };
+    r.readAsText(file);
+  }
+  async function restorePrevBackup(){
+    try {
+      const prev = JSON.parse(localStorage.getItem(PREV_KEY) || '[]');
+      if (!prev.length){ showToast('কোনো পূর্ববর্তী ব্যাকআপ নেই'); return; }
+      const last = prev[0];
+      const ok = await confirmDialog('সর্বশেষ ব্যাকআপে ফিরে যাবেন?\n(' + new Date(last.at).toLocaleString('bn-BD') + ')', { title:'ব্যাকআপ রিস্টোর', okText:'হ্যাঁ' });
+      if (!ok) return;
+      const s = JSON.parse(last.data);
+      state = { entries: s.entries||[], categories: s.categories||clone(DEFAULT_CATS), updatedAt: Date.now() };
+      persist(); render();
+      showToast('✓ রিস্টোর সম্পন্ন');
+    } catch(e){ showToast('রিস্টোর ব্যর্থ'); }
+  }
+  async function clearAll(){
+    const ok = await confirmDialog('সব ডেটা মুছে ফেলবেন? এটি ফিরিয়ে আনা যাবে না।\n(আগে JSON ব্যাকআপ নেওয়ার পরামর্শ)', { icon:'🗑️', title:'সব ডেটা মুছবেন?', okText:'হ্যাঁ, সব মুছুন' });
+    if (!ok) return;
+    const ok2 = await confirmDialog('একদম নিশ্চিত?', { icon:'⚠️', title:'শেষ নিশ্চিতকরণ', okText:'হ্যাঁ, মুছে ফেলুন' });
+    if (!ok2) return;
+    pushBackup();
+    state = { entries: [], categories: clone(DEFAULT_CATS), updatedAt: Date.now() };
+    persist(); render();
+    showToast('✓ সব ডেটা মুছে ফেলা হয়েছে');
+  }
+
+  /* ==================== Drawer ==================== */
+  function openDrawer(){ $('drawer').classList.add('open'); $('drawerOverlay').classList.add('open'); vibrate(8); }
+  function closeDrawer(){ $('drawer').classList.remove('open'); $('drawerOverlay').classList.remove('open'); }
+
+  /* ==================== Footer nav ==================== */
+  function setFooterActive(nav){
+    document.querySelectorAll('.fbtn[data-nav]').forEach(b => b.classList.toggle('active', b.dataset.nav === nav));
+  }
+
+  function handleNav(nav){
+    vibrate(8);
+    if (nav === 'home'){
+      setFooterActive('home');
+      document.querySelectorAll('.page.open').forEach(p => p.classList.remove('open'));
+      try { $('appContent').scrollTo({ top: 0, behavior: 'smooth' }); } catch(e){ $('appContent').scrollTop = 0; }
+    }
+    else if (nav === 'reports'){ setFooterActive('reports'); openReportsPage(); }
+    else if (nav === 'add'){ openEntryModal(null); }
+    else if (nav === 'digit'){
+      prefs.bn = !prefs.bn; savePrefs();
+      render();
+      if ($('reportsPage').classList.contains('open')) renderReport();
+      showToast(prefs.bn ? 'সংখ্যা: বাংলা' : 'সংখ্যা: English');
+      setFooterActive('home');
+    }
+    else if (nav === 'settings'){ setFooterActive('settings'); openSettingsPage(); }
+  }
+
+  /* ==================== Event Bindings ==================== */
+  $('hamburgerBtn').addEventListener('click', openDrawer);
+  $('drawerOverlay').addEventListener('click', closeDrawer);
+
+  document.querySelectorAll('#drawer .dmi').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const action = btn.dataset.action;
+      closeDrawer();
+      setTimeout(async () => {
+        if (action === 'home'){ handleNav('home'); }
+        else if (action === 'reports'){ openReportsPage(); setFooterActive('reports'); }
+        else if (action === 'categories'){ openCategoriesPage(); }
+        else if (action === 'settings'){ openSettingsPage(); setFooterActive('settings'); }
+        else if (action === 'github'){ openSettingsPage(); setTimeout(()=> { try { $('ghToken').focus(); } catch(e){} }, 400); }
+        else if (action === 'backup'){ exportJSON(); }
+        else if (action === 'csv'){ exportCSV(); }
+        else if (action === 'restore'){ $('importFile').click(); }
+        else if (action === 'restorePrev'){ await restorePrevBackup(); }
+        else if (action === 'digit'){
+          prefs.bn = !prefs.bn; savePrefs(); render();
+          if ($('reportsPage').classList.contains('open')) renderReport();
+          showToast(prefs.bn ? 'সংখ্যা: বাংলা' : 'সংখ্যা: English');
+        }
+        else if (action === 'clearAll'){ await clearAll(); }
+      }, 200);
+    });
+  });
+
+  document.querySelectorAll('.fbtn[data-nav]').forEach(btn => {
+    btn.addEventListener('click', () => handleNav(btn.dataset.nav));
+  });
+
+  $('prevMonth').addEventListener('click', () => changeMonth(-1));
+  $('nextMonth').addEventListener('click', () => changeMonth(1));
+  function changeMonth(d){
+    let p = currentMonth.split('-').map(Number), y = p[0], m = p[1] + d;
+    if (m < 1){ m = 12; y--; }
+    if (m > 12){ m = 1; y++; }
+    currentMonth = y + '-' + String(m).padStart(2,'0');
+    render();
+  }
+
+  document.querySelectorAll('.tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      filter = btn.dataset.type;
+      document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('active', b === btn));
+      render();
+    });
+  });
+
+  $('searchInput').addEventListener('input', e => { searchQuery = e.target.value.trim(); render(); });
+  $('breakdownToggle').addEventListener('click', () => $('breakdownCard').classList.toggle('open'));
+
+  $('list').addEventListener('click', e => {
+    const del = e.target.closest('.del-btn');
+    if (del){ e.stopPropagation(); deleteEntryById(Number(del.dataset.del)); return; }
+    const item = e.target.closest('.item');
+    if (!item) return;
+    const id = Number(item.dataset.id);
+    const entry = state.entries.find(x => x.id === id);
+    if (entry) openEntryModal(entry);
+  });
+
+  $('closeEntry').addEventListener('click', closeEntryModal);
+  $('entryModal').addEventListener('click', e => { if (e.target === $('entryModal')) closeEntryModal(); });
+  document.querySelectorAll('#entryModal .type-toggle button').forEach(b => b.addEventListener('click', () => setFormType(b.dataset.t)));
+  $('saveEntryBtn').addEventListener('click', saveEntry);
+  $('deleteEntryBtn').addEventListener('click', deleteEntryFromModal);
+  $('amount').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('note').focus(); } });
+  $('note').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveEntry(); } });
+
+  document.querySelectorAll('.page-back[data-close]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      closePage(btn.dataset.close);
+      if (btn.dataset.close === 'reportsPage' || btn.dataset.close === 'settingsPage') setFooterActive('home');
+    });
+  });
+
+  document.querySelectorAll('#reportToggle button').forEach(b => {
+    b.addEventListener('click', () => {
+      reportPeriod = b.dataset.period;
+      document.querySelectorAll('#reportToggle button').forEach(x => x.classList.toggle('active', x === b));
+      renderReport();
+    });
+  });
+  $('reportContent').addEventListener('click', e => {
+    const btn = e.target.closest('[data-nav]');
+    if (!btn) return;
+    const nav = btn.dataset.nav;
+    if (nav === 'prev-month'){
+      let p = reportMonth.split('-').map(Number), y = p[0], m = p[1]-1;
+      if (m < 1){ m = 12; y--; }
+      reportMonth = y + '-' + String(m).padStart(2,'0'); renderReport();
+    } else if (nav === 'next-month'){
+      let p = reportMonth.split('-').map(Number), y = p[0], m = p[1]+1;
+      if (m > 12){ m = 1; y++; }
+      reportMonth = y + '-' + String(m).padStart(2,'0'); renderReport();
+    } else if (nav === 'prev-year'){ reportYear--; renderReport(); }
+    else if (nav === 'next-year'){ reportYear++; renderReport(); }
+  });
+
+  $('btnSaveSettings').addEventListener('click', () => {
+    gh.token = $('ghToken').value.trim();
+    gh.gistId = $('ghGistId').value.trim();
+    gh.autoSync = $('autoSync').checked;
+    saveGh(); setSyncStatus('✅ সংরক্ষিত', 'ok'); renderSyncStatus();
+    showToast('✓ সেটিংস সংরক্ষিত');
+    autoSync(false).catch(()=>{});
+  });
+  $('btnTest').addEventListener('click', async () => {
+    gh.token = $('ghToken').value.trim();
+    if (!gh.token){ setSyncStatus('টোকেন দিন', 'err'); return; }
+    saveGh(); setSyncStatus('টেস্ট চলছে...', 'info');
+    try { setSyncStatus(await testConnection(), 'ok'); }
+    catch(e){ setSyncStatus(e.message, 'err'); }
+  });
+  $('btnCreateGist').addEventListener('click', async () => {
+    gh.token = $('ghToken').value.trim();
+    if (!gh.token){ setSyncStatus('টোকেন দিন', 'err'); return; }
+    saveGh(); setSyncStatus('তৈরি হচ্ছে...', 'info');
+    try {
+      const id = await createGist();
+      gh.gistId = id; gh.lastSync = Date.now(); saveGh();
+      $('ghGistId').value = id;
+      setSyncStatus('✅ তৈরি: ' + id, 'ok'); renderSyncStatus();
+    } catch(e){ setSyncStatus('❌ ' + e.message, 'err'); }
+  });
+  $('btnPush').addEventListener('click', async () => {
+    gh.token = $('ghToken').value.trim(); gh.gistId = $('ghGistId').value.trim(); saveGh();
+    setSyncStatus('আপলোড হচ্ছে...', 'info');
+    try { setSyncStatus(await pushToGist(), 'ok'); renderSyncStatus(); }
+    catch(e){ setSyncStatus('❌ ' + e.message, 'err'); }
+  });
+  $('btnPull').addEventListener('click', async () => {
+    gh.token = $('ghToken').value.trim(); gh.gistId = $('ghGistId').value.trim(); saveGh();
+    setSyncStatus('ডাউনলোড হচ্ছে...', 'info');
+    try { setSyncStatus(await pullFromGist(), 'ok'); }
+    catch(e){ setSyncStatus('❌ ' + e.message, 'err'); }
+  });
+
+  $('exportJSON').addEventListener('click', exportJSON);
+  $('exportCSV').addEventListener('click', exportCSV);
+  $('importJSON').addEventListener('click', () => $('importFile').click());
+  $('btnRestorePrev').addEventListener('click', restorePrevBackup);
+  $('btnClearAll').addEventListener('click', clearAll);
+  $('importFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) importJSON(f); e.target.value = ''; });
+
+  document.querySelectorAll('#catTypeToggle button').forEach(b => {
+    b.addEventListener('click', () => {
+      catType = b.dataset.ct;
+      document.querySelectorAll('#catTypeToggle button').forEach(x => x.classList.toggle('active', x === b));
+      renderCatList();
+    });
+  });
+  $('addCatBtn').addEventListener('click', addCategory);
+  $('newCatName').addEventListener('keydown', e => { if (e.key === 'Enter') addCategory(); });
+  $('catList').addEventListener('click', e => {
+    const btn = e.target.closest('[data-del]');
+    if (btn) deleteCategory(btn.dataset.del);
+  });
+
+  /* ==================== Auto Sync (cross-browser) ==================== */
+  async function autoSync(quiet){
+    if (!gh.token || !gh.gistId) return false;
+    if (syncing) return false;
+    syncing = true;
+    renderSyncStatus();
+    try {
+      const g = await ghRequest('/gists/' + gh.gistId);
+      const file = g.files && g.files['budget.json'];
+      if (!file){ lastSyncError = 'gist-এ budget.json নেই'; return false; }
+      let content = file.content;
+      if (file.truncated && file.raw_url){
+        const r = await fetch(file.raw_url, { headers: { 'Authorization': 'token ' + gh.token } });
+        content = await r.text();
+      }
+      const remote = JSON.parse(content);
+      if (!remote || !Array.isArray(remote.entries)){ lastSyncError = 'ডেটা ফরম্যাট ভুল'; return false; }
+      lastSyncError = null;
+      const remoteAt = remote.updatedAt || 0;
+      const localAt = state.updatedAt || 0;
+
+      // Remote is newer → pull (another device updated)
+      if (remoteAt > localAt + 1000){
+        pushBackup();
+        state = { entries: remote.entries, categories: remote.categories || clone(DEFAULT_CATS), updatedAt: remoteAt };
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch(e){}
+        gh.lastSync = Date.now(); saveGh();
+        if (!quiet) showToast('🔄 অন্য ডিভাইস থেকে আপডেট এসেছে');
+        render();
+        return true;
+      }
+      // Local is newer → push (unsynced changes)
+      if (localAt > remoteAt + 1000 && state.entries.length > 0){
+        if (pushTimer){ clearTimeout(pushTimer); pushTimer = null; }
+        await pushToGist();
+        if (!quiet) showToast('⬆ স্থানীয় পরিবর্তন আপলোড হয়েছে');
+        return true;
+      }
+      gh.lastSync = Date.now(); saveGh();
+      return false;
+    } catch (e){
+      console.warn('Auto-sync failed:', e.message);
+      lastSyncError = e.message;
+      return false;
+    } finally {
+      syncing = false;
+      renderSyncStatus();
+    }
+  }
+
+  /* ==================== Init ==================== */
+  render();
+  autoSync(false).catch(()=>{});
+
+  // অন্য ট্যাব থেকে ফিরে এলে রিমোট চেক করো
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden){
+      setTimeout(() => {
+        if ($('entryModal').classList.contains('open')) return;
+        if ($('confirmModal').classList.contains('open')) return;
+        autoSync(false).catch(()=>{});
+      }, 2000);
+    }
+  });
+
+  window.addEventListener('orientationchange', () => { setTimeout(() => { render(); }, 200); });
+})();
+</script>
+</body>
+</html>
